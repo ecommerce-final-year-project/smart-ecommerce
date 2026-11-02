@@ -5,6 +5,7 @@ builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 // CORS politikası (Frontend entegrasyonu için)
+// NOT: Production ortamında AllowAll yerine yalnızca frontend origin'i ile sınırlandırılacak.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

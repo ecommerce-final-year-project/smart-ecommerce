@@ -24,10 +24,12 @@ cd infra
 docker compose up -d
 ```
 
-### 2. AuthService'i Çalıştırma
-Yeni bir terminalde:
+### 2. AuthService Gizli Ayarlarını Yapılandırma (`dotnet user-secrets`) ve Çalıştırma
+Geliştirme ortamında PostgreSQL bağlantı dizesi (`infra/.env.example` içindeki `POSTGRES_USER=ecom` ve `POSTGRES_PASSWORD=change_me` değerleriyle uyumlu) ve JWT gizli anahtarı `dotnet user-secrets` üzerinden okunur. Yeni bir terminalde:
 ```bash
 cd src/Services/AuthService
+dotnet user-secrets set "ConnectionStrings:PostgreSQL" "Host=localhost;Port=5432;Database=smart_ecom_auth;Username=ecom;Password=change_me"
+dotnet user-secrets set "Jwt:SecretKey" "<YOUR_SECRET_KEY_AT_LEAST_32_CHARS_LONG>"
 dotnet run
 ```
 * Tarayıcıdan test arayüzü: [http://localhost:5001/scalar/v1](http://localhost:5001/scalar/v1)

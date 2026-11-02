@@ -9,8 +9,11 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Veritabanı (PostgreSQL)
-var connectionString = builder.Configuration.GetConnectionString("PostgreSQL")
-    ?? throw new InvalidOperationException("PostgreSQL bağlantı dizesi 'ConnectionStrings:PostgreSQL' bulunamadı.");
+var connectionString = builder.Configuration.GetConnectionString("PostgreSQL");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("PostgreSQL bağlantı dizesi 'ConnectionStrings:PostgreSQL' bulunamadı.");
+}
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -19,8 +22,11 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 // 3. JWT Kimlik Doğrulama
-var jwtSecretKey = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("Jwt:SecretKey konfigürasyonu eksik.");
+var jwtSecretKey = builder.Configuration["Jwt:SecretKey"];
+if (string.IsNullOrWhiteSpace(jwtSecretKey))
+{
+    throw new InvalidOperationException("Jwt:SecretKey konfigürasyonu eksik.");
+}
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "SmartEcommerce";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "SmartEcommerceClients";
 
@@ -40,23 +46,16 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = "role",
+        NameClaimType = "name"
     };
 });
 
 builder.Services.AddAuthorization();
 
-// 4. Controller ve CORS
+// 4. Controller
 builder.Services.AddControllers();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
 
 // 5. OpenAPI Dokümantasyonu
 builder.Services.AddOpenApi();
@@ -83,8 +82,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(); // Tarayıcıdan http://localhost:5001/scalar/v1 adresinden test arayüzü sunar
 }
-
-app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

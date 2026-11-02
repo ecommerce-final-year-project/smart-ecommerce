@@ -22,8 +22,11 @@ public class TokenService : ITokenService
 
     public (string Token, DateTime ExpiresAt) GenerateToken(User user)
     {
-        var secretKey = _configuration["Jwt:SecretKey"] 
-            ?? throw new InvalidOperationException("Jwt:SecretKey yapılandırması eksik.");
+        var secretKey = _configuration["Jwt:SecretKey"];
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            throw new InvalidOperationException("Jwt:SecretKey yapılandırması eksik.");
+        }
         var issuer = _configuration["Jwt:Issuer"] ?? "SmartEcommerce";
         var audience = _configuration["Jwt:Audience"] ?? "SmartEcommerceClients";
         var expirationMinutes = int.TryParse(_configuration["Jwt:ExpirationMinutes"], out var exp) ? exp : 120;
@@ -36,7 +39,7 @@ public class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Name, user.FullName),
-            new(ClaimTypes.Role, user.Role),
+            new("role", user.Role),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
